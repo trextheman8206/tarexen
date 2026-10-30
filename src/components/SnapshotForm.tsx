@@ -16,11 +16,12 @@ type Props = {
   cantons: { code: string; province_code: string; name: string }[];
   initialCategory?: string;
   plan?: string;
+  submitLabel?: string;
 };
 
 const INITIAL: SnapshotState = { attempt: 0, errors: {}, values: {} };
 
-export function SnapshotForm({ lang, labels: L, categories, provinces, cantons, initialCategory, plan }: Props) {
+export function SnapshotForm({ lang, labels: L, categories, provinces, cantons, initialCategory, plan, submitLabel }: Props) {
   const [state, action, pending] = useActionState(submitSnapshot, INITIAL);
   const v = state.values;
   const e = state.errors;
@@ -255,7 +256,7 @@ export function SnapshotForm({ lang, labels: L, categories, provinces, cantons, 
       </fieldset>
 
       <button type="submit" className="btn btn-primary" disabled={pending} style={{ justifySelf: "start" }}>
-        {pending ? L.sending : L.submit}
+        {pending ? L.sending : submitLabel ?? L.submit}
       </button>
     </form>
   );

@@ -15,11 +15,11 @@ export const PRICING_STATUS: "proposed" | "validated" = "proposed";
 // Una suscripción mensual necesita un "plan" de suscripción creado en PayPal (no es un hosted button).
 export const PAYPAL = {
   clientId: "BAATVRlYKMcD2WKRL_GvrdmTAUJ9qmRSk48hlIKvWNIMhaDKyiJgkuPCtExNVP7hTUqKWBBx2Em7yhZWEo",
-  // Verificado en el botón renderizado: 557TC4Q5JXDCN cobra USD 29.00 ("pro"), pago único.
-  // Falta crear en PayPal un botón de USD 69 para Business y agregarlo aquí como business_ec.
-  hostedButtons: {
-    pro_ec: "557TC4Q5JXDCN", // USD 29, pago de un mes
-  } as Partial<Record<`${PlanId}_${Region}`, string>>,
+  // Cada plan y región necesita SU PROPIO botón (un ID distinto por monto). Editar un botón
+  // en PayPal cambia el monto en todas partes donde se usa: 557TC4Q5JXDCN se editó de USD 29
+  // a USD 197, así que no se usa hasta tener botones separados y verificados.
+  // Agregar aquí solo IDs cuyo monto se haya comprobado en el botón renderizado.
+  hostedButtons: {} as Partial<Record<`${PlanId}_${Region}`, string>>,
 };
 
 export const PLANS: {

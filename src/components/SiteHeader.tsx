@@ -36,16 +36,20 @@ export function SiteHeader({ lang, labels }: { lang: Lang; labels: Labels }) {
         </nav>
         <div className="header-actions">
           {/* Siempre visible: el nombre del idioma está escrito en ese idioma para que lo reconozca quien no habla el actual. */}
-          <Link
+          {/* Carga completa (no navegación interna) y conserva ?plan=… y #sección al cambiar de idioma. */}
+          <a
             href={switchHref}
             className="lang-toggle"
             hrefLang={other}
             lang={other}
             aria-label={lang === "es" ? "Switch to English" : "Cambiar a español"}
-            onClick={close}
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.assign(switchHref + window.location.search + window.location.hash);
+            }}
           >
             <span aria-hidden="true">🌐</span> {other === "en" ? "English" : "Español"}
-          </Link>
+          </a>
           <button
             className="btn btn-ghost btn-sm menu-toggle"
             aria-expanded={open}

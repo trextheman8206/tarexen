@@ -168,7 +168,7 @@ export async function submitSnapshot(prev: SnapshotState, formData: FormData): P
       preferred_lang: v.report_lang,
       consent_at: new Date().toISOString(),
       consent_version: CONSENT_VERSION,
-      source: raw.plan ? `web:${raw.plan}` : "web",
+      source: /^(free|business|pro):(ec|intl)$/.test(raw.plan ?? "") ? `web:${raw.plan}` : "web",
     });
   } catch (err) {
     console.error("[snapshot] no se pudo guardar", err);
