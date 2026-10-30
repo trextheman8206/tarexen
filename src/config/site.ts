@@ -1,13 +1,15 @@
-// Datos de contacto: vienen de variables de entorno públicas. Si no están
-// configuradas, el sitio oculta el botón correspondiente en vez de mostrar un
-// número inventado.
+// Contacto público del negocio. Las variables de entorno NEXT_PUBLIC_* permiten
+// cambiarlo sin tocar código; si se vacían explícitamente, el botón se oculta.
+const DEFAULT_WHATSAPP = "593967904552";
+const DEFAULT_EMAIL = "aihub8206@gmail.com";
+
 export const SITE = {
   name: "TAREXEN",
   product: "TAREXEN AI Visibility",
   // En Netlify, URL es la dirección principal del sitio (la pone Netlify automáticamente).
   url: process.env.NEXT_PUBLIC_SITE_URL || process.env.URL || "http://localhost:3000",
-  whatsapp: (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "").replace(/\D/g, ""),
-  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "",
+  whatsapp: (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? DEFAULT_WHATSAPP).replace(/\D/g, ""),
+  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? DEFAULT_EMAIL,
 };
 
 export function whatsappLink(text: string): string | null {
