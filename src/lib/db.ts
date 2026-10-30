@@ -192,6 +192,46 @@ export function isLocalDatabase(): boolean {
   return !url || url.startsWith("file:");
 }
 
+/** Diagnóstico para el panel: forma del token (nunca su valor) y prueba real de conexión. */
+export async function databaseDiagnostics() {
+  const url = envValue("DATABASE_URL") ?? "";
+  const token = envValue("DATABASE_AUTH_TOKEN") ?? "";
+  let host = "";
+  try { host = url.startsWith("file:") || !url ? "" : new URL(url).host; } catch { host = "URL inválida"; }
+
+  let payloadKeys: string[] = [];
+  try {
+    payloadKeys = Object.keys(JSON.parse(Buffer.from(token.split(".")[1] ?? "", "base64url").toString()));
+  } catch { /* no es un JWT */ }
+  const kind = !token
+    ? "sin token"
+    : payloadKeys.includes("org_id")
+      ? "token de API de la cuenta (incorrecto: hace falta un token de la base de datos)"
+      : payloadKeys.includes("a") || payloadKeys.includes("id")
+        ? "token de base de datos"
+        : "formato no reconocido";
+
+  let connection = "";
+  try {
+    await (await db()).execute("SELECT 1");
+    connection = "OK";
+  } catch (err) {
+    connection = String((err as Error).message).slice(0, 160);
+  }
+  return {
+    scheme: url.split(":")[0] || "(vacía)",
+    host,
+    token: {
+      present: Boolean(token),
+      length: token.length,
+      parts: token ? token.split(".").length : 0,
+      suspiciousChars: /[\s()"'<>]/.test(token),
+      kind,
+    },
+    connection,
+  };
+}
+
 async function seed(c: Client) {
   const { rows } = await c.execute("SELECT COUNT(*) AS n FROM categories");
   if (Number(rows[0].n) === 0) {

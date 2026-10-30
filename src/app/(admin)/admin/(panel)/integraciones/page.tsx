@@ -1,5 +1,5 @@
 import { SITE } from "@/config/site";
-import { isLocalDatabase } from "@/lib/db";
+import { databaseDiagnostics, isLocalDatabase } from "@/lib/db";
 
 export const metadata = { title: "Integraciones" };
 
@@ -17,7 +17,8 @@ function Status({ ok, label }: { ok: boolean; label: string }) {
   return <span className={`badge ${ok ? "badge-ok" : ""}`}>{label}</span>;
 }
 
-export default function IntegrationsPage() {
+export default async function IntegrationsPage() {
+  const diag = await databaseDiagnostics();
   return (
     <div className="stack">
       <div className="page-head">
@@ -55,6 +56,16 @@ export default function IntegrationsPage() {
         <dl className="kv">
           <dt>Base de datos</dt>
           <dd>{isLocalDatabase() ? <><Status ok label="Archivo local" /> <span className="small muted">data/tarexen.db — para producción usa Turso (DATABASE_URL)</span></> : <Status ok label="Remota (libSQL/Turso)" />}</dd>
+          <dt>Conexión a la base</dt>
+          <dd><Status ok={diag.connection === "OK"} label={diag.connection === "OK" ? "OK" : "Error"} />{diag.connection !== "OK" && <div className="small muted">{diag.connection}</div>}</dd>
+          <dt>DATABASE_URL</dt>
+          <dd className="small">esquema: {diag.scheme} · host: {diag.host || "—"}</dd>
+          <dt>DATABASE_AUTH_TOKEN</dt>
+          <dd className="small">
+            {diag.token.present ? `${diag.token.kind} · ${diag.token.length} caracteres · ${diag.token.parts} partes` : "no configurado"}
+            {diag.token.suspiciousChars && " · ⚠ contiene espacios, comillas o paréntesis"}
+            <div className="muted">El valor del token nunca se muestra.</div>
+          </dd>
           <dt>WhatsApp público</dt>
           <dd>{SITE.whatsapp ? <Status ok label={`+${SITE.whatsapp}`} /> : <><Status ok={false} label="No configurado" /> <span className="small muted">NEXT_PUBLIC_WHATSAPP_NUMBER — el botón está oculto</span></>}</dd>
           <dt>Email público</dt>
