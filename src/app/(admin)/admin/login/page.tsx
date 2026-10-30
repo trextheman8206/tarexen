@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
-import { adminConfigured, isAdmin } from "@/lib/auth";
+import { adminConfigured, getSessionUser } from "@/lib/auth";
 import { LoginForm } from "./LoginForm";
 
 export const metadata = { title: "Ingresar" };
+export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
-  if (await isAdmin()) redirect("/admin");
+  if (await getSessionUser()) redirect("/admin");
   return (
     <main className="container" style={{ maxWidth: 420, paddingTop: 80 }}>
       <div className="card">

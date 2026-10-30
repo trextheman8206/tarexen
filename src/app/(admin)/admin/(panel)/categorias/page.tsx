@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { requirePerm } from "@/lib/auth";
 import { db, plain } from "@/lib/db";
 import { createCategoryAction } from "../../actions";
 
 export const metadata = { title: "Categorías" };
 
 export default async function CategoriesAdmin() {
+  await requirePerm("categories.manage");
   const c = await db();
   const rows = plain<{ id: number; slug: string; name_es: string; icon: string; active: number; sort: number; subs: number; checks: number; questions: number; businesses: number }>(
     await c.execute(`

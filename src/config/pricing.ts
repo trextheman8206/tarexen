@@ -10,6 +10,18 @@ export type PlanId = "free" | "business" | "pro";
 
 export const PRICING_STATUS: "proposed" | "validated" = "proposed";
 
+// PayPal "Hosted Buttons" (pago único). El client-id es público por diseño de PayPal.
+// El monto lo define el botón en PayPal: si cambias el precio aquí, cámbialo también allá.
+// Una suscripción mensual necesita un "plan" de suscripción creado en PayPal (no es un hosted button).
+export const PAYPAL = {
+  clientId: "BAATVRlYKMcD2WKRL_GvrdmTAUJ9qmRSk48hlIKvWNIMhaDKyiJgkuPCtExNVP7hTUqKWBBx2Em7yhZWEo",
+  // Verificado en el botón renderizado: 557TC4Q5JXDCN cobra USD 29.00 ("pro"), pago único.
+  // Falta crear en PayPal un botón de USD 69 para Business y agregarlo aquí como business_ec.
+  hostedButtons: {
+    pro_ec: "557TC4Q5JXDCN", // USD 29, pago de un mes
+  } as Partial<Record<`${PlanId}_${Region}`, string>>,
+};
+
 export const PLANS: {
   id: PlanId;
   price: Record<Region, number>;

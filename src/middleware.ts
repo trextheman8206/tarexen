@@ -5,6 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // idioma inválido.
 export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
+  if (pathname === "/favicon.ico") return NextResponse.redirect(new URL("/icon.svg", req.url), 308);
   const first = pathname.split("/")[1];
   if (first === "es" || first === "en") return NextResponse.next();
   const url = new URL(`/es${pathname === "/" ? "" : pathname}${search}`, req.url);
@@ -12,5 +13,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next|api|admin|icon|robots\\.txt|sitemap\\.xml|favicon\\.ico).*)"],
+  matcher: ["/((?!_next|api|admin|icon|robots\\.txt|sitemap\\.xml).*)"],
 };

@@ -1,25 +1,36 @@
 import Link from "next/link";
 import { PRICING_STATUS } from "@/config/pricing";
+import { requireUser } from "@/lib/auth";
 import { dashboardStats, BUSINESS_STATUSES } from "@/lib/repo";
+import { can, ROLE_INFO } from "@/lib/roles";
 import { createDemoAction } from "../actions";
 import { StatusBadge } from "./ui";
 
 export const metadata = { title: "Resumen" };
 
-export default async function Dashboard() {
+export default async function Dashboard({ searchParams }: { searchParams: Promise<{ "sin-permiso"?: string }> }) {
+  const user = await requireUser();
+  const sp = await searchParams;
   const s = await dashboardStats();
   const leads = BUSINESS_STATUSES.reduce((n, st) => n + (s.byStatus[st] ?? 0), 0);
+  const seesMoney = can(user.role, "payments.manage");
 
   return (
     <div className="stack">
       <div className="page-head">
         <h1>Resumen</h1>
-        <form action={createDemoAction}>
-          <button className="btn btn-ghost btn-sm" title="Crea un negocio y auditoría marcados como DEMO">+ Crear datos DEMO</button>
-        </form>
+        {can(user.role, "demo.create") && (
+          <form action={createDemoAction}>
+            <button className="btn btn-ghost btn-sm" title="Crea un negocio y auditoría marcados como DEMO">+ Crear datos DEMO</button>
+          </form>
+        )}
       </div>
 
-      {PRICING_STATUS === "proposed" && (
+      {sp["sin-permiso"] && (
+        <p className="alert alert-warn small" style={{ margin: 0 }}>Tu tipo de acceso ({ROLE_INFO[user.role].label}) no permite abrir esa sección.</p>
+      )}
+
+      {seesMoney && PRICING_STATUS === "proposed" && (
         <p className="alert alert-warn small" style={{ margin: 0 }}>
           Los precios publicados son <b>propuestos</b> (hipótesis sin validar). Ver docs/01-negocio.md §4 y el plan de validación.
         </p>
@@ -28,8 +39,8 @@ export default async function Dashboard() {
       <div className="grid grid-4">
         <div className="card stat"><b>{leads}</b><span>Negocios registrados (sin demo)</span></div>
         <div className="card stat"><b>{s.byStatus.cliente ?? 0}</b><span>Clientes</span></div>
-        <div className="card stat"><b>USD {s.revenue.month.toFixed(2)}</b><span>Ingresos este mes</span></div>
-        <div className="card stat"><b>USD {s.revenue.total.toFixed(2)}</b><span>Ingresos totales</span></div>
+        {seesMoney && <div className="card stat"><b>USD {s.revenue.month.toFixed(2)}</b><span>Ingresos este mes</span></div>}
+        {seesMoney && <div className="card stat"><b>USD {s.revenue.total.toFixed(2)}</b><span>Ingresos totales</span></div>}
       </div>
 
       <div className="grid grid-2" style={{ alignItems: "start" }}>

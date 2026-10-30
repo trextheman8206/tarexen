@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { PLATFORMS, REC_AREAS } from "@/config/site";
-import { checkPassword, endSession, requireAdmin, startSession, adminConfigured } from "@/lib/auth";
+import { actorLabel, adminConfigured, authenticate, endSession, requirePerm, startSession } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { INVITABLE_ROLES } from "@/lib/roles";
+import { acceptInvitation, createInvitation, MIN_PASSWORD, revokeInvitation, updateMember } from "@/lib/team";
 import {
   addPayment, addQuery, addRecommendation, BUSINESS_STATUSES, createAudit, createBusiness, deleteQuery,
   deleteRecommendation, getAudit, listChecklist, getBusiness, saveChecks, updateAudit, updateBusinessStatus,
@@ -25,16 +27,19 @@ const loginAttempts = new Map<string, number[]>();
 
 export async function login(_: { error: string } | null, fd: FormData) {
   if (!adminConfigured()) return { error: "El panel no está configurado: define ADMIN_PASSWORD y SESSION_SECRET (32+ caracteres) en .env.local." };
+  const email = str(fd, "email").toLowerCase().slice(0, 200);
+  const key = email || "dueno";
   const now = Date.now();
-  const recent = (loginAttempts.get("admin") ?? []).filter((t) => now - t < 15 * 60_000);
+  const recent = (loginAttempts.get(key) ?? []).filter((t) => now - t < 15 * 60_000);
   if (recent.length >= 10) return { error: "Demasiados intentos. Espera 15 minutos." };
-  if (!checkPassword(str(fd, "password"))) {
+  const user = await authenticate(email, String(fd.get("password") ?? ""));
+  if (!user) {
     recent.push(now);
-    loginAttempts.set("admin", recent);
-    return { error: "Contraseña incorrecta." };
+    loginAttempts.set(key, recent);
+    return { error: "Email o contraseña incorrectos." };
   }
-  loginAttempts.delete("admin");
-  await startSession();
+  loginAttempts.delete(key);
+  await startSession(user.id);
   redirect("/admin");
 }
 
@@ -43,10 +48,64 @@ export async function logout() {
   redirect("/admin/login");
 }
 
+// ---------- Equipo ----------
+
+const inviteRole = z.enum(INVITABLE_ROLES as ["gerente", "auditor", "ventas", "lectura"]);
+
+export async function createInviteAction(fd: FormData) {
+  const user = await requirePerm("team.manage");
+  const token = await createInvitation(inviteRole.parse(str(fd, "role")), str(fd, "note").slice(0, 200), actorLabel(user));
+  // El enlace solo se muestra una vez (en la base se guarda su hash).
+  redirect(`/admin/equipo?nueva=${encodeURIComponent(token)}`);
+}
+
+export async function revokeInviteAction(fd: FormData) {
+  await requirePerm("team.manage");
+  await revokeInvitation(int(fd, "id"));
+  revalidatePath("/admin/equipo");
+}
+
+export async function updateMemberAction(fd: FormData) {
+  await requirePerm("team.manage");
+  const id = int(fd, "id");
+  const role = str(fd, "role");
+  await updateMember(id, {
+    role: role ? inviteRole.parse(role) : undefined,
+    active: fd.has("active") ? str(fd, "active") === "1" : undefined,
+  });
+  revalidatePath("/admin/equipo");
+}
+
+export type JoinState = { error: string; values: { name: string; email: string }; done?: boolean } | null;
+
+/** Pública: la usa quien recibió el enlace de invitación. */
+export async function acceptInviteAction(_: JoinState, fd: FormData): Promise<JoinState> {
+  const token = str(fd, "token");
+  const name = str(fd, "name").slice(0, 120);
+  const email = str(fd, "email").toLowerCase().slice(0, 200);
+  const password = String(fd.get("password") ?? "");
+  const values = { name, email };
+  if (name.length < 2) return { error: "Escribe tu nombre.", values };
+  if (!z.string().email().safeParse(email).success) return { error: "Escribe un email válido.", values };
+  if (password.length < MIN_PASSWORD) return { error: `La contraseña debe tener al menos ${MIN_PASSWORD} caracteres.`, values };
+  if (password !== String(fd.get("password2") ?? "")) return { error: "Las contraseñas no coinciden.", values };
+  const res = await acceptInvitation(token, name, email, password);
+  if (!res.ok) {
+    return {
+      error: res.error === "email_taken" ? "Ese email ya tiene una cuenta en el equipo." : "La invitación no es válida, ya se usó o venció. Pide una nueva.",
+      values,
+    };
+  }
+  await startSession(res.memberId);
+  // La navegación al panel la hace el cliente (ver JoinForm): con redirect() aquí,
+  // el navegador terminaba en el sitio público en vez del panel.
+  return { error: "", values, done: true };
+}
+
 // ---------- Negocios ----------
 
 export async function updateBusinessAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('leads.edit');
   const id = int(fd, "id");
   const status = z.enum(BUSINESS_STATUSES).parse(str(fd, "status"));
   await updateBusinessStatus(id, status, str(fd, "notes").slice(0, 5000));
@@ -54,7 +113,7 @@ export async function updateBusinessAction(fd: FormData) {
 }
 
 export async function addPaymentAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('payments.manage');
   const business_id = int(fd, "business_id");
   const amount = Number(str(fd, "amount_usd"));
   if (!Number.isFinite(amount) || amount < 0) throw new Error("Monto inválido");
@@ -72,7 +131,7 @@ export async function addPaymentAction(fd: FormData) {
 
 /** Datos DEMO claramente marcados para enseñar el flujo sin inventar clientes reales. */
 export async function createDemoAction() {
-  await requireAdmin();
+  await requirePerm('demo.create');
   const c = await db();
   const cat = (await c.execute("SELECT id FROM categories WHERE slug = 'restaurantes'")).rows[0];
   const id = await createBusiness({
@@ -98,7 +157,7 @@ export async function createDemoAction() {
 // ---------- Auditorías ----------
 
 export async function createAuditAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('audits.edit');
   const businessId = int(fd, "business_id");
   const biz = await getBusiness(businessId);
   if (!biz) throw new Error("Negocio no encontrado");
@@ -108,7 +167,7 @@ export async function createAuditAction(fd: FormData) {
 }
 
 export async function createFollowupAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('audits.edit');
   const parent = await getAudit(int(fd, "audit_id"));
   if (!parent) throw new Error("Auditoría no encontrada");
   const id = await createAudit(parent.business_id, "followup", parent.report_lang, parent.id);
@@ -118,7 +177,7 @@ export async function createFollowupAction(fd: FormData) {
 const platformIds = PLATFORMS.map((p) => p.id) as [string, ...string[]];
 
 export async function addQueryAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('audits.edit');
   const auditId = int(fd, "audit_id");
   const retest = Number(fd.get("retest_of_id")) || null;
   const position = Number(fd.get("position")) || null;
@@ -148,7 +207,7 @@ export async function addQueryAction(fd: FormData) {
 }
 
 export async function deleteQueryAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('audits.edit');
   const auditId = int(fd, "audit_id");
   await deleteQuery(int(fd, "id"), auditId);
   revalidatePath(`/admin/auditorias/${auditId}`);
@@ -157,7 +216,7 @@ export async function deleteQueryAction(fd: FormData) {
 const RESULTS: CheckResult[] = ["cumple", "parcial", "no_cumple", "desconocido"];
 
 export async function saveChecksAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('audits.edit');
   const auditId = int(fd, "audit_id");
   const audit = await getAudit(auditId);
   if (!audit) throw new Error("Auditoría no encontrada");
@@ -171,7 +230,7 @@ export async function saveChecksAction(fd: FormData) {
 }
 
 export async function addRecommendationAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('audits.edit');
   const auditId = int(fd, "audit_id");
   const text = str(fd, "text");
   if (text.length < 5) throw new Error("La recomendación está vacía");
@@ -190,14 +249,14 @@ export async function addRecommendationAction(fd: FormData) {
 }
 
 export async function deleteRecommendationAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('audits.edit');
   const auditId = int(fd, "audit_id");
   await deleteRecommendation(int(fd, "id"), auditId);
   revalidatePath(`/admin/auditorias/${auditId}`);
 }
 
 export async function updateAuditAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('audits.edit');
   const id = int(fd, "audit_id");
   await updateAudit(id, {
     summary: str(fd, "summary").slice(0, 6000),
@@ -213,7 +272,7 @@ const slugify = (s: string) =>
   s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
 
 export async function createCategoryAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('categories.manage');
   const nameEs = str(fd, "name_es");
   const nameEn = str(fd, "name_en") || nameEs;
   const slug = slugify(str(fd, "slug") || nameEs);
@@ -229,7 +288,7 @@ export async function createCategoryAction(fd: FormData) {
 }
 
 export async function updateCategoryAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('categories.manage');
   const id = int(fd, "id");
   const c = await db();
   await c.execute({
@@ -244,7 +303,7 @@ export async function updateCategoryAction(fd: FormData) {
 }
 
 export async function addSubcategoryAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('categories.manage');
   const categoryId = int(fd, "category_id");
   const es = str(fd, "name_es");
   if (es.length < 2) throw new Error("Nombre obligatorio");
@@ -254,14 +313,14 @@ export async function addSubcategoryAction(fd: FormData) {
 }
 
 export async function toggleSubcategoryAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('categories.manage');
   const c = await db();
   await c.execute({ sql: "UPDATE subcategories SET active = 1 - active WHERE id = ?", args: [int(fd, "id")] });
   revalidatePath(`/admin/categorias/${int(fd, "category_id")}`);
 }
 
 export async function addChecklistItemAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('categories.manage');
   const categoryId = int(fd, "category_id");
   const es = str(fd, "label_es");
   if (es.length < 3) throw new Error("Texto obligatorio");
@@ -275,7 +334,7 @@ export async function addChecklistItemAction(fd: FormData) {
 }
 
 export async function updateChecklistItemAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('categories.manage');
   const c = await db();
   const weight = Math.min(5, Math.max(1, Number(str(fd, "weight")) || 1));
   await c.execute({
@@ -286,7 +345,7 @@ export async function updateChecklistItemAction(fd: FormData) {
 }
 
 export async function addQuestionAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('categories.manage');
   const categoryId = int(fd, "category_id");
   const es = str(fd, "text_es");
   if (es.length < 5) throw new Error("Pregunta obligatoria");
@@ -296,7 +355,7 @@ export async function addQuestionAction(fd: FormData) {
 }
 
 export async function deleteQuestionAction(fd: FormData) {
-  await requireAdmin();
+  await requirePerm('categories.manage');
   const c = await db();
   await c.execute({ sql: "DELETE FROM example_questions WHERE id = ?", args: [int(fd, "id")] });
   revalidatePath(`/admin/categorias/${int(fd, "category_id")}`);

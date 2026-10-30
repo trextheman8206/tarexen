@@ -1,4 +1,5 @@
 import { SITE } from "@/config/site";
+import { requirePerm } from "@/lib/auth";
 import { databaseDiagnostics, isLocalDatabase } from "@/lib/db";
 
 export const metadata = { title: "Integraciones" };
@@ -18,6 +19,7 @@ function Status({ ok, label }: { ok: boolean; label: string }) {
 }
 
 export default async function IntegrationsPage() {
+  await requirePerm("integrations.view");
   const diag = await databaseDiagnostics();
   return (
     <div className="stack">

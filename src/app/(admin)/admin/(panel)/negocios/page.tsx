@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { requirePerm } from "@/lib/auth";
 import { BUSINESS_STATUSES, listBusinesses, listCategories } from "@/lib/repo";
 import { StatusBadge, statusLabel } from "../ui";
 
 export const metadata = { title: "Negocios" };
 
 export default async function BusinessesPage({ searchParams }: { searchParams: Promise<{ estado?: string; categoria?: string; q?: string }> }) {
+  await requirePerm("leads.view");
   const sp = await searchParams;
   const status = BUSINESS_STATUSES.includes(sp.estado as never) ? sp.estado : undefined;
   const categoryId = Number(sp.categoria) || undefined;

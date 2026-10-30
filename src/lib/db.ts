@@ -163,6 +163,31 @@ CREATE TABLE IF NOT EXISTS payments (
   note TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_pay_biz ON payments(business_id);
+
+CREATE TABLE IF NOT EXISTS team_members (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('gerente','auditor','ventas','lectura')),
+  active INTEGER NOT NULL DEFAULT 1,
+  invited_by TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  last_login_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS invitations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  token_hash TEXT NOT NULL UNIQUE,
+  role TEXT NOT NULL CHECK (role IN ('gerente','auditor','ventas','lectura')),
+  note TEXT NOT NULL DEFAULT '',
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  expires_at TEXT NOT NULL,
+  used_at TEXT,
+  used_by_member_id INTEGER REFERENCES team_members(id),
+  revoked_at TEXT
+);
 `;
 
 type Global = { __tarexenDb?: Client; __tarexenReady?: Promise<void> };

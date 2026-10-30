@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { requirePerm } from "@/lib/auth";
 import { db, plain } from "@/lib/db";
 import { getCategory, listQuestions, listSubcategories, type ChecklistItem } from "@/lib/repo";
 import {
@@ -10,6 +11,7 @@ import {
 export const metadata = { title: "Editar categoría" };
 
 export default async function CategoryEdit({ params }: { params: Promise<{ id: string }> }) {
+  await requirePerm("categories.manage");
   const { id } = await params;
   const cat = await getCategory(Number(id));
   if (!cat) notFound();

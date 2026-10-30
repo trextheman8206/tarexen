@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { requirePerm } from "@/lib/auth";
 import { BUSINESS_STATUSES, getBusiness, listAuditsForBusiness, listPayments } from "@/lib/repo";
+import { can } from "@/lib/roles";
 import { addPaymentAction, createAuditAction, updateBusinessAction } from "../../../actions";
 import { KIND_LABEL, StatusBadge, statusLabel } from "../../ui";
 
@@ -15,10 +17,17 @@ function waLink(raw: string) {
 }
 
 export default async function BusinessPage({ params }: { params: Promise<{ id: string }> }) {
+  const user = await requirePerm("leads.view");
+  const may = {
+    editLead: can(user.role, "leads.edit"),
+    audits: can(user.role, "audits.edit"),
+    reports: can(user.role, "reports.view"),
+    payments: can(user.role, "payments.manage"),
+  };
   const { id } = await params;
   const b = await getBusiness(Number(id));
   if (!b) notFound();
-  const [audits, payments] = await Promise.all([listAuditsForBusiness(b.id), listPayments(b.id)]);
+  const [audits, payments] = await Promise.all([listAuditsForBusiness(b.id), may.payments ? listPayments(b.id) : Promise.resolve([])]);
   const location = [b.parish_name ?? b.parish_text, b.neighborhood, b.canton_name, b.province_name].filter(Boolean).join(", ");
 
   return (
@@ -65,7 +74,7 @@ export default async function BusinessPage({ params }: { params: Promise<{ id: s
               <dt>Origen</dt><dd>{b.source}</dd>
             </dl>
           </div>
-          <form action={updateBusinessAction} className="card" key={b.updated_at + b.status}>
+          {may.editLead && <form action={updateBusinessAction} className="card" key={b.updated_at + b.status}>
             <h2>Seguimiento comercial</h2>
             <input type="hidden" name="id" value={b.id} />
             <div className="field">
@@ -79,18 +88,20 @@ export default async function BusinessPage({ params }: { params: Promise<{ id: s
               <textarea id="notes" name="notes" defaultValue={b.notes} placeholder="Objeciones, precio ofrecido, próxima acción…" />
             </div>
             <button className="btn btn-primary btn-sm">Guardar</button>
-          </form>
+          </form>}
         </div>
       </div>
 
       <div className="card">
         <div className="page-head" style={{ marginBottom: 8 }}>
           <h2>Auditorías</h2>
-          <form action={createAuditAction} className="btn-row">
-            <input type="hidden" name="business_id" value={b.id} />
-            <button name="kind" value="snapshot" className="btn btn-ghost btn-sm">+ Snapshot gratis</button>
-            <button name="kind" value="full" className="btn btn-primary btn-sm">+ Auditoría completa</button>
-          </form>
+          {may.audits && (
+            <form action={createAuditAction} className="btn-row">
+              <input type="hidden" name="business_id" value={b.id} />
+              <button name="kind" value="snapshot" className="btn btn-ghost btn-sm">+ Snapshot gratis</button>
+              <button name="kind" value="full" className="btn btn-primary btn-sm">+ Auditoría completa</button>
+            </form>
+          )}
         </div>
         {audits.length === 0 ? <p className="muted">Sin auditorías todavía.</p> : (
           <div className="table-wrap">
@@ -105,7 +116,10 @@ export default async function BusinessPage({ params }: { params: Promise<{ id: s
                     <td>{a.query_count}</td>
                     <td>{a.query_count ? `${a.appeared_count}/${a.query_count}` : "—"}</td>
                     <td className="small">{a.created_at.slice(0, 10)}</td>
-                    <td><Link href={`/admin/auditorias/${a.id}`}>Abrir</Link> · <Link href={`/admin/informe/${a.id}`}>Informe</Link></td>
+                    <td>
+                      {may.audits && <><Link href={`/admin/auditorias/${a.id}`}>Abrir</Link> · </>}
+                      {may.reports && <Link href={`/admin/informe/${a.id}`}>Informe</Link>}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -114,7 +128,7 @@ export default async function BusinessPage({ params }: { params: Promise<{ id: s
         )}
       </div>
 
-      <div className="card">
+      {may.payments && <div className="card">
         <h2>Pagos</h2>
         {payments.length > 0 && (
           <div className="table-wrap" style={{ marginBottom: 14 }}>
@@ -140,7 +154,7 @@ export default async function BusinessPage({ params }: { params: Promise<{ id: s
           </div>
           <button className="btn btn-ghost btn-sm" style={{ marginTop: 10 }}>Registrar pago</button>
         </form>
-      </div>
+      </div>}
     </div>
   );
 }

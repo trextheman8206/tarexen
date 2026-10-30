@@ -57,6 +57,11 @@ const es = {
     names: { free: "Gratis", business: "Business", pro: "Pro" },
     cta: { free: "Pedir mi análisis gratis", business: "Quiero el plan Business", pro: "Quiero el plan Pro" },
     disclaimer: "No garantizamos posiciones, recomendaciones, clientes ni ventas. Ningún proveedor honesto puede hacerlo.",
+    payNow: "Paga ahora con PayPal o tarjeta",
+    payFirstMonth: "Paga tu primer mes con PayPal o tarjeta",
+    payAfter: "Después de pagar, completa el formulario para empezar.",
+    payFail: "El pago con PayPal no cargó. Escríbenos por WhatsApp y te enviamos el enlace de pago.",
+    monthlyNote: "Se paga mes a mes: cada mes te enviamos el enlace de pago por WhatsApp. Cancelas cuando quieras.",
   },
   faq: {
     title: "Preguntas frecuentes",
@@ -146,6 +151,11 @@ const en: Dict = {
     names: { free: "Free", business: "Business", pro: "Pro" },
     cta: { free: "Get my free audit", business: "I want Business", pro: "I want Pro" },
     disclaimer: "We don't guarantee rankings, recommendations, customers or sales. No honest provider can.",
+    payNow: "Pay now with PayPal or card",
+    payFirstMonth: "Pay your first month with PayPal or card",
+    payAfter: "After paying, fill in the form to get started.",
+    payFail: "PayPal didn't load. Message us on WhatsApp and we'll send you a payment link.",
+    monthlyNote: "Billed month to month: each month we send you the payment link on WhatsApp. Cancel anytime.",
   },
   faq: {
     title: "Frequently asked questions",
@@ -184,7 +194,8 @@ const en: Dict = {
 const DICTS: Record<Lang, Dict> = { es, en };
 
 export function t(lang: Lang): Dict {
-  return DICTS[lang];
+  // Respaldo en español por si una ruta llega con un idioma inválido.
+  return DICTS[lang] ?? DICTS.es;
 }
 
 export function catName(c: { name_es: string; name_en: string }, lang: Lang) {

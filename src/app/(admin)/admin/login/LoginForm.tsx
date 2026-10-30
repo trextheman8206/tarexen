@@ -9,6 +9,11 @@ export function LoginForm() {
     <form action={action} className="stack">
       {state?.error && <p className="alert alert-error" role="alert">{state.error}</p>}
       <div className="field">
+        <label htmlFor="email">Email</label>
+        <input id="email" name="email" type="email" autoComplete="username" />
+        <span className="hint">El dueño puede dejarlo vacío.</span>
+      </div>
+      <div className="field">
         <label htmlFor="password">Contraseña</label>
         <input id="password" name="password" type="password" required autoComplete="current-password" />
       </div>

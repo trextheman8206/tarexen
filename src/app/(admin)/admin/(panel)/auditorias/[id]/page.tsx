@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { platformName, PLATFORMS, REC_AREAS } from "@/config/site";
+import { requirePerm } from "@/lib/auth";
 import { checklistScore, pct, visibilityStats } from "@/lib/report";
 import { getAudit, getBusiness, listChecklist, listChecks, listQueries, listQuestions, listRecommendations } from "@/lib/repo";
 import {
@@ -15,6 +16,7 @@ export const metadata = { title: "Auditoría" };
 const nowEcuador = () => new Date(Date.now() - 5 * 3600_000).toISOString().slice(0, 16);
 
 export default async function AuditPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ retest?: string }> }) {
+  await requirePerm("audits.edit");
   const { id } = await params;
   const sp = await searchParams;
   const audit = await getAudit(Number(id));

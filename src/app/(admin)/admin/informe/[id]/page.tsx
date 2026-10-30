@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { platformName, REC_AREAS, SITE } from "@/config/site";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { checklistScore, pct, visibilityStats } from "@/lib/report";
 import { getAudit, getBusiness, listChecklist, listChecks, listQueries, listRecommendations } from "@/lib/repo";
 import { PrintButton } from "./PrintButton";
@@ -47,7 +47,7 @@ const L = {
 } as const;
 
 export default async function ReportPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ lang?: string }> }) {
-  await requireAdmin();
+  await requirePerm("reports.view");
   const { id } = await params;
   const sp = await searchParams;
   const audit = await getAudit(Number(id));
