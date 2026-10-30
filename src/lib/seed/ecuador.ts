@@ -1,0 +1,70 @@
+// División político-administrativa de Ecuador: 24 provincias y 221 cantones.
+// Los códigos de provincia son los del INEC. Los códigos de cantón son
+// provincia + orden en esta lista; el importador (scripts/import-parishes.mjs)
+// empareja por NOMBRE, así que el DPA oficial del INEC puede cargarse encima.
+// Las parroquias solo vienen precargadas para cantones de muestra (Imbabura);
+// el resto se escribe a mano en el formulario o se importa desde el INEC.
+
+export const PROVINCES: { code: string; name: string; cantons: string[] }[] = [
+  { code: "01", name: "Azuay", cantons: ["Cuenca", "Girón", "Gualaceo", "Nabón", "Paute", "Pucará", "San Fernando", "Santa Isabel", "Sigsig", "Oña", "Chordeleg", "El Pan", "Sevilla de Oro", "Guachapala", "Camilo Ponce Enríquez"] },
+  { code: "02", name: "Bolívar", cantons: ["Guaranda", "Chillanes", "Chimbo", "Echeandía", "San Miguel", "Caluma", "Las Naves"] },
+  { code: "03", name: "Cañar", cantons: ["Azogues", "Biblián", "Cañar", "La Troncal", "El Tambo", "Déleg", "Suscal"] },
+  { code: "04", name: "Carchi", cantons: ["Tulcán", "Bolívar", "Espejo", "Mira", "Montúfar", "San Pedro de Huaca"] },
+  { code: "05", name: "Cotopaxi", cantons: ["Latacunga", "La Maná", "Pangua", "Pujilí", "Salcedo", "Saquisilí", "Sigchos"] },
+  { code: "06", name: "Chimborazo", cantons: ["Riobamba", "Alausí", "Colta", "Chambo", "Chunchi", "Guamote", "Guano", "Pallatanga", "Penipe", "Cumandá"] },
+  { code: "07", name: "El Oro", cantons: ["Machala", "Arenillas", "Atahualpa", "Balsas", "Chilla", "El Guabo", "Huaquillas", "Marcabelí", "Pasaje", "Piñas", "Portovelo", "Santa Rosa", "Zaruma", "Las Lajas"] },
+  { code: "08", name: "Esmeraldas", cantons: ["Esmeraldas", "Eloy Alfaro", "Muisne", "Quinindé", "San Lorenzo", "Atacames", "Rioverde"] },
+  { code: "09", name: "Guayas", cantons: ["Guayaquil", "Alfredo Baquerizo Moreno", "Balao", "Balzar", "Colimes", "Daule", "Durán", "El Empalme", "El Triunfo", "Milagro", "Naranjal", "Naranjito", "Palestina", "Pedro Carbo", "Samborondón", "Santa Lucía", "Salitre", "San Jacinto de Yaguachi", "Playas", "Simón Bolívar", "Coronel Marcelino Maridueña", "Lomas de Sargentillo", "Nobol", "General Antonio Elizalde", "Isidro Ayora"] },
+  { code: "10", name: "Imbabura", cantons: ["Ibarra", "Antonio Ante", "Cotacachi", "Otavalo", "Pimampiro", "San Miguel de Urcuquí"] },
+  { code: "11", name: "Loja", cantons: ["Loja", "Calvas", "Catamayo", "Celica", "Chaguarpamba", "Espíndola", "Gonzanamá", "Macará", "Paltas", "Puyango", "Saraguro", "Sozoranga", "Zapotillo", "Pindal", "Quilanga", "Olmedo"] },
+  { code: "12", name: "Los Ríos", cantons: ["Babahoyo", "Baba", "Montalvo", "Puebloviejo", "Quevedo", "Urdaneta", "Ventanas", "Vinces", "Palenque", "Buena Fe", "Valencia", "Mocache", "Quinsaloma"] },
+  { code: "13", name: "Manabí", cantons: ["Portoviejo", "Bolívar", "Chone", "El Carmen", "Flavio Alfaro", "Jipijapa", "Junín", "Manta", "Montecristi", "Paján", "Pichincha", "Rocafuerte", "Santa Ana", "Sucre", "Tosagua", "24 de Mayo", "Pedernales", "Olmedo", "Puerto López", "Jama", "Jaramijó", "San Vicente"] },
+  { code: "14", name: "Morona Santiago", cantons: ["Morona", "Gualaquiza", "Limón Indanza", "Palora", "Santiago", "Sucúa", "Huamboya", "San Juan Bosco", "Taisha", "Logroño", "Pablo Sexto", "Tiwintza"] },
+  { code: "15", name: "Napo", cantons: ["Tena", "Archidona", "El Chaco", "Quijos", "Carlos Julio Arosemena Tola"] },
+  { code: "16", name: "Pastaza", cantons: ["Pastaza", "Mera", "Santa Clara", "Arajuno"] },
+  { code: "17", name: "Pichincha", cantons: ["Quito", "Cayambe", "Mejía", "Pedro Moncayo", "Rumiñahui", "San Miguel de los Bancos", "Pedro Vicente Maldonado", "Puerto Quito"] },
+  { code: "18", name: "Tungurahua", cantons: ["Ambato", "Baños de Agua Santa", "Cevallos", "Mocha", "Patate", "Quero", "San Pedro de Pelileo", "Santiago de Píllaro", "Tisaleo"] },
+  { code: "19", name: "Zamora Chinchipe", cantons: ["Zamora", "Chinchipe", "Nangaritza", "Yacuambi", "Yantzaza", "El Pangui", "Centinela del Cóndor", "Palanda", "Paquisha"] },
+  { code: "20", name: "Galápagos", cantons: ["San Cristóbal", "Isabela", "Santa Cruz"] },
+  { code: "21", name: "Sucumbíos", cantons: ["Lago Agrio", "Gonzalo Pizarro", "Putumayo", "Shushufindi", "Sucumbíos", "Cascales", "Cuyabeno"] },
+  { code: "22", name: "Orellana", cantons: ["Francisco de Orellana", "Aguarico", "La Joya de los Sachas", "Loreto"] },
+  { code: "23", name: "Santo Domingo de los Tsáchilas", cantons: ["Santo Domingo", "La Concordia"] },
+  { code: "24", name: "Santa Elena", cantons: ["Santa Elena", "La Libertad", "Salinas"] },
+];
+
+// Parroquias de muestra: [provincia, cantón, parroquia, tipo]
+export const SAMPLE_PARISHES: [string, string, string, "urbana" | "rural"][] = [
+  ["Imbabura", "Cotacachi", "El Sagrario", "urbana"],
+  ["Imbabura", "Cotacachi", "San Francisco", "urbana"],
+  ["Imbabura", "Cotacachi", "Apuela", "rural"],
+  ["Imbabura", "Cotacachi", "García Moreno", "rural"],
+  ["Imbabura", "Cotacachi", "Imantag", "rural"],
+  ["Imbabura", "Cotacachi", "Peñaherrera", "rural"],
+  ["Imbabura", "Cotacachi", "Plaza Gutiérrez", "rural"],
+  ["Imbabura", "Cotacachi", "Quiroga", "rural"],
+  ["Imbabura", "Cotacachi", "6 de Julio de Cuellaje", "rural"],
+  ["Imbabura", "Cotacachi", "Vacas Galindo", "rural"],
+  ["Imbabura", "Ibarra", "Caranqui", "urbana"],
+  ["Imbabura", "Ibarra", "Guayaquil de Alpachaca", "urbana"],
+  ["Imbabura", "Ibarra", "Sagrario", "urbana"],
+  ["Imbabura", "Ibarra", "San Francisco", "urbana"],
+  ["Imbabura", "Ibarra", "La Dolorosa del Priorato", "urbana"],
+  ["Imbabura", "Ibarra", "Ambuquí", "rural"],
+  ["Imbabura", "Ibarra", "Angochagua", "rural"],
+  ["Imbabura", "Ibarra", "Carolina", "rural"],
+  ["Imbabura", "Ibarra", "La Esperanza", "rural"],
+  ["Imbabura", "Ibarra", "Lita", "rural"],
+  ["Imbabura", "Ibarra", "Salinas", "rural"],
+  ["Imbabura", "Ibarra", "San Antonio", "rural"],
+  ["Imbabura", "Otavalo", "Jordán", "urbana"],
+  ["Imbabura", "Otavalo", "San Luis", "urbana"],
+  ["Imbabura", "Otavalo", "Dr. Miguel Egas Cabezas", "rural"],
+  ["Imbabura", "Otavalo", "Eugenio Espejo", "rural"],
+  ["Imbabura", "Otavalo", "González Suárez", "rural"],
+  ["Imbabura", "Otavalo", "Pataquí", "rural"],
+  ["Imbabura", "Otavalo", "San José de Quichinche", "rural"],
+  ["Imbabura", "Otavalo", "San Juan de Ilumán", "rural"],
+  ["Imbabura", "Otavalo", "San Pablo", "rural"],
+  ["Imbabura", "Otavalo", "San Rafael", "rural"],
+  ["Imbabura", "Otavalo", "Selva Alegre", "rural"],
+];
