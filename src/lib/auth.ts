@@ -2,16 +2,21 @@ import "server-only";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { envValue } from "./env";
 
 const COOKIE = "tx_admin";
 const MAX_AGE_S = 60 * 60 * 12;
 
+const adminPassword = () => envValue("ADMIN_PASSWORD");
+const sessionSecret = () => envValue("SESSION_SECRET");
+
 export function adminConfigured(): boolean {
-  return Boolean(process.env.ADMIN_PASSWORD && process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 32);
+  const secret = sessionSecret();
+  return Boolean(adminPassword() && secret && secret.length >= 32);
 }
 
 function sign(payload: string): string {
-  return createHmac("sha256", process.env.SESSION_SECRET!).update(payload).digest("base64url");
+  return createHmac("sha256", sessionSecret()!).update(payload).digest("base64url");
 }
 
 function safeEqual(a: string, b: string): boolean {
@@ -23,7 +28,7 @@ function safeEqual(a: string, b: string): boolean {
 
 export function checkPassword(input: string): boolean {
   if (!adminConfigured()) return false;
-  return safeEqual(input, process.env.ADMIN_PASSWORD!);
+  return safeEqual(input.trim(), adminPassword()!);
 }
 
 export async function startSession() {

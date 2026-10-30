@@ -4,7 +4,8 @@
 export const SITE = {
   name: "TAREXEN",
   product: "TAREXEN AI Visibility",
-  url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+  // En Netlify, URL es la dirección principal del sitio (la pone Netlify automáticamente).
+  url: process.env.NEXT_PUBLIC_SITE_URL || process.env.URL || "http://localhost:3000",
   whatsapp: (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "").replace(/\D/g, ""),
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "",
 };

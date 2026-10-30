@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient, type Client, type InStatement, type ResultSet } from "@libsql/client";
 import { mkdirSync } from "node:fs";
+import { envValue } from "./env";
 import { BASE_CHECKS, CATEGORIES } from "./seed/categories";
 import { PROVINCES, SAMPLE_PARISHES } from "./seed/ecuador";
 
@@ -166,12 +167,6 @@ CREATE INDEX IF NOT EXISTS idx_pay_biz ON payments(business_id);
 
 type Global = { __tarexenDb?: Client; __tarexenReady?: Promise<void> };
 const g = globalThis as Global;
-
-/** Limpia valores pegados en paneles de hosting: espacios, saltos de línea y comillas envolventes. */
-function envValue(name: string): string | undefined {
-  const v = process.env[name]?.trim().replace(/^(["'])(.*)\1$/, "$2").trim();
-  return v || undefined;
-}
 
 function client(): Client {
   if (!g.__tarexenDb) {
