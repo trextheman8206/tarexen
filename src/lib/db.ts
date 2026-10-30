@@ -167,17 +167,29 @@ CREATE INDEX IF NOT EXISTS idx_pay_biz ON payments(business_id);
 type Global = { __tarexenDb?: Client; __tarexenReady?: Promise<void> };
 const g = globalThis as Global;
 
+/** Limpia valores pegados en paneles de hosting: espacios, saltos de línea y comillas envolventes. */
+function envValue(name: string): string | undefined {
+  const v = process.env[name]?.trim().replace(/^(["'])(.*)\1$/, "$2").trim();
+  return v || undefined;
+}
+
 function client(): Client {
   if (!g.__tarexenDb) {
-    const url = process.env.DATABASE_URL || "file:data/tarexen.db";
-    if (url.startsWith("file:")) mkdirSync("data", { recursive: true });
-    g.__tarexenDb = createClient({ url, authToken: process.env.DATABASE_AUTH_TOKEN || undefined });
+    const url = envValue("DATABASE_URL") || "file:data/tarexen.db";
+    if (url.startsWith("file:")) {
+      if (process.env.NODE_ENV === "production" && process.env.NETLIFY) {
+        throw new Error("DATABASE_URL no está configurada en el hosting.");
+      }
+      mkdirSync("data", { recursive: true });
+    }
+    g.__tarexenDb = createClient({ url, authToken: envValue("DATABASE_AUTH_TOKEN") });
   }
   return g.__tarexenDb;
 }
 
 export function isLocalDatabase(): boolean {
-  return !process.env.DATABASE_URL || process.env.DATABASE_URL.startsWith("file:");
+  const url = envValue("DATABASE_URL");
+  return !url || url.startsWith("file:");
 }
 
 async function seed(c: Client) {
