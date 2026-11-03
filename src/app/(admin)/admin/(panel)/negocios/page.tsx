@@ -1,11 +1,15 @@
+import { adminT, adminTitle } from "@/lib/admin-i18n";
 import Link from "next/link";
 import { requirePerm } from "@/lib/auth";
 import { BUSINESS_STATUSES, listBusinesses, listCategories } from "@/lib/repo";
 import { StatusBadge, statusLabel } from "../ui";
 
-export const metadata = { title: "Negocios" };
+export async function generateMetadata() {
+  return adminTitle("Negocios");
+}
 
 export default async function BusinessesPage({ searchParams }: { searchParams: Promise<{ estado?: string; categoria?: string; q?: string }> }) {
+  const T = await adminT();
   await requirePerm("leads.view");
   const sp = await searchParams;
   const status = BUSINESS_STATUSES.includes(sp.estado as never) ? sp.estado : undefined;
@@ -15,36 +19,36 @@ export default async function BusinessesPage({ searchParams }: { searchParams: P
 
   return (
     <div>
-      <div className="page-head"><h1>Negocios y leads</h1></div>
+      <div className="page-head"><h1>{T("Negocios y leads")}</h1></div>
       <form className="filters" method="get">
         <div className="field">
-          <label htmlFor="q">Buscar</label>
-          <input id="q" name="q" type="text" defaultValue={q} placeholder="Nombre, contacto o cantón" />
+          <label htmlFor="q">{T("Buscar")}</label>
+          <input id="q" name="q" type="text" defaultValue={q} placeholder={T("Nombre, contacto o cantón")} />
         </div>
         <div className="field">
-          <label htmlFor="estado">Estado</label>
+          <label htmlFor="estado">{T("Estado")}</label>
           <select id="estado" name="estado" defaultValue={status ?? ""}>
-            <option value="">Todos</option>
-            {BUSINESS_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
+            <option value="">{T("Todos")}</option>
+            {BUSINESS_STATUSES.map((s) => <option key={s} value={s}>{T(statusLabel(s))}</option>)}
           </select>
         </div>
         <div className="field">
-          <label htmlFor="categoria">Categoría</label>
+          <label htmlFor="categoria">{T("Categoría")}</label>
           <select id="categoria" name="categoria" defaultValue={categoryId ?? ""}>
-            <option value="">Todas</option>
-            {categories.map((c) => <option key={c.id} value={c.id}>{c.name_es}</option>)}
+            <option value="">{T("Todas")}</option>
+            {categories.map((c) => <option key={c.id} value={c.id}>{T.lang === "en" ? c.name_en : c.name_es}</option>)}
           </select>
         </div>
-        <button className="btn btn-primary btn-sm">Filtrar</button>
+        <button className="btn btn-primary btn-sm">{T("Filtrar")}</button>
       </form>
 
       <div className="table-wrap">
         <table>
           <thead>
-            <tr><th>Negocio</th><th>Categoría</th><th>Ubicación</th><th>Contacto</th><th>Estado</th><th>Registro</th></tr>
+            <tr><th>{T("Negocio")}</th><th>{T("Categoría")}</th><th>{T("Ubicación")}</th><th>{T("Contacto")}</th><th>{T("Estado")}</th><th>{T("Registro")}</th></tr>
           </thead>
           <tbody>
-            {rows.length === 0 && <tr><td colSpan={6} className="muted">Sin resultados.</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={6} className="muted">{T("Sin resultados.")}</td></tr>}
             {rows.map((b) => (
               <tr key={b.id}>
                 <td>
@@ -52,7 +56,7 @@ export default async function BusinessesPage({ searchParams }: { searchParams: P
                   {b.is_demo ? <span className="badge badge-warn">DEMO</span> : null}
                   <div className="small muted">{b.source}</div>
                 </td>
-                <td>{b.category_name ?? "—"}{b.subcategory_name ? <div className="small muted">{b.subcategory_name}</div> : null}</td>
+                <td>{(T.lang === "en" ? b.category_name_en : b.category_name) ?? "—"}{b.subcategory_name ? <div className="small muted">{T.lang === "en" ? b.subcategory_name_en : b.subcategory_name}</div> : null}</td>
                 <td>{b.canton_name}<div className="small muted">{b.province_name}</div></td>
                 <td>{b.contact_name}<div className="small muted">{b.contact_whatsapp ?? b.contact_email}</div></td>
                 <td><StatusBadge status={b.status} /></td>

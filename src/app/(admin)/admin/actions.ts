@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { PLATFORMS, REC_AREAS } from "@/config/site";
-import { actorLabel, adminConfigured, authenticate, endSession, requirePerm, startSession } from "@/lib/auth";
+import { ADMIN_LANG_COOKIE, adminT } from "@/lib/admin-i18n";
+import { actorLabel, adminConfigured, authenticate, endSession, requirePerm, requireUser, startSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { INVITABLE_ROLES } from "@/lib/roles";
 import { acceptInvitation, createInvitation, MIN_PASSWORD, revokeInvitation, updateMember } from "@/lib/team";
@@ -26,17 +28,18 @@ const int = (fd: FormData, k: string) => {
 const loginAttempts = new Map<string, number[]>();
 
 export async function login(_: { error: string } | null, fd: FormData) {
-  if (!adminConfigured()) return { error: "El panel no está configurado: define ADMIN_PASSWORD y SESSION_SECRET (32+ caracteres) en .env.local." };
+  const T = await adminT();
+  if (!adminConfigured()) return { error: T("El panel no está configurado: define ADMIN_PASSWORD y SESSION_SECRET (32+ caracteres) en .env.local.") };
   const email = str(fd, "email").toLowerCase().slice(0, 200);
   const key = email || "dueno";
   const now = Date.now();
   const recent = (loginAttempts.get(key) ?? []).filter((t) => now - t < 15 * 60_000);
-  if (recent.length >= 10) return { error: "Demasiados intentos. Espera 15 minutos." };
+  if (recent.length >= 10) return { error: T("Demasiados intentos. Espera 15 minutos.") };
   const user = await authenticate(email, String(fd.get("password") ?? ""));
   if (!user) {
     recent.push(now);
     loginAttempts.set(key, recent);
-    return { error: "Email o contraseña incorrectos." };
+    return { error: T("Email o contraseña incorrectos.") };
   }
   loginAttempts.delete(key);
   await startSession(user.id);
@@ -46,6 +49,19 @@ export async function login(_: { error: string } | null, fd: FormData) {
 export async function logout() {
   await endSession();
   redirect("/admin/login");
+}
+
+/** Idioma del panel: se recuerda en este navegador durante un año. */
+export async function setAdminLangAction(fd: FormData) {
+  await requireUser();
+  (await cookies()).set(ADMIN_LANG_COOKIE, str(fd, "lang") === "en" ? "en" : "es", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+  revalidatePath("/admin", "layout");
 }
 
 // ---------- Equipo ----------
@@ -85,14 +101,15 @@ export async function acceptInviteAction(_: JoinState, fd: FormData): Promise<Jo
   const email = str(fd, "email").toLowerCase().slice(0, 200);
   const password = String(fd.get("password") ?? "");
   const values = { name, email };
-  if (name.length < 2) return { error: "Escribe tu nombre.", values };
-  if (!z.string().email().safeParse(email).success) return { error: "Escribe un email válido.", values };
-  if (password.length < MIN_PASSWORD) return { error: `La contraseña debe tener al menos ${MIN_PASSWORD} caracteres.`, values };
-  if (password !== String(fd.get("password2") ?? "")) return { error: "Las contraseñas no coinciden.", values };
+  const T = await adminT();
+  if (name.length < 2) return { error: T("Escribe tu nombre."), values };
+  if (!z.string().email().safeParse(email).success) return { error: T("Escribe un email válido."), values };
+  if (password.length < MIN_PASSWORD) return { error: T("La contraseña debe tener al menos {n} caracteres.", { n: MIN_PASSWORD }), values };
+  if (password !== String(fd.get("password2") ?? "")) return { error: T("Las contraseñas no coinciden."), values };
   const res = await acceptInvitation(token, name, email, password);
   if (!res.ok) {
     return {
-      error: res.error === "email_taken" ? "Ese email ya tiene una cuenta en el equipo." : "La invitación no es válida, ya se usó o venció. Pide una nueva.",
+      error: T(res.error === "email_taken" ? "Ese email ya tiene una cuenta en el equipo." : "La invitación no es válida, ya se usó o venció. Pide una nueva."),
       values,
     };
   }

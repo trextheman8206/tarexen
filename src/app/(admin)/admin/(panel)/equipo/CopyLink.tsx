@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 
-export function CopyLink({ url }: { url: string }) {
+type Labels = { field: string; copied: string; copy: string; whatsapp: string };
+
+export function CopyLink({ url, labels: L }: { url: string; labels: Labels }) {
   const [copied, setCopied] = useState(false);
   const wa = `https://wa.me/?text=${encodeURIComponent(`Te invito al equipo de TAREXEN. Crea tu acceso aquí (vence en 7 días): ${url}`)}`;
   return (
     <div className="stack" style={{ gap: 10 }}>
-      <input type="text" readOnly value={url} onFocus={(e) => e.currentTarget.select()} aria-label="Enlace de invitación" />
+      <input type="text" readOnly value={url} onFocus={(e) => e.currentTarget.select()} aria-label={L.field} />
       <div className="btn-row">
         <button
           type="button"
@@ -21,9 +23,9 @@ export function CopyLink({ url }: { url: string }) {
             }
           }}
         >
-          {copied ? "✓ Copiado" : "Copiar enlace"}
+          {copied ? L.copied : L.copy}
         </button>
-        <a className="btn btn-wa btn-sm" href={wa} target="_blank" rel="noopener noreferrer">Enviar por WhatsApp</a>
+        <a className="btn btn-wa btn-sm" href={wa} target="_blank" rel="noopener noreferrer">{L.whatsapp}</a>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { adminT, adminTitle } from "@/lib/admin-i18n";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePerm } from "@/lib/auth";
@@ -8,9 +9,12 @@ import {
   updateCategoryAction, updateChecklistItemAction,
 } from "../../../actions";
 
-export const metadata = { title: "Editar categoría" };
+export async function generateMetadata() {
+  return adminTitle("Editar categoría");
+}
 
 export default async function CategoryEdit({ params }: { params: Promise<{ id: string }> }) {
+  const T = await adminT();
   await requirePerm("categories.manage");
   const { id } = await params;
   const cat = await getCategory(Number(id));
@@ -26,60 +30,60 @@ export default async function CategoryEdit({ params }: { params: Promise<{ id: s
     <div className="stack">
       <div className="page-head">
         <div>
-          <p className="small"><Link href="/admin/categorias">← Categorías</Link></p>
-          <h1>{cat.icon} {cat.name_es}</h1>
+          <p className="small"><Link href="/admin/categorias">{T("← Categorías")}</Link></p>
+          <h1>{cat.icon} {T.lang === "en" ? cat.name_en : cat.name_es}</h1>
         </div>
-        {cat.active ? <Link className="btn btn-ghost btn-sm" href={`/es/categorias/${cat.slug}`} target="_blank">Ver página pública ↗</Link> : null}
+        {cat.active ? <Link className="btn btn-ghost btn-sm" href={`/es/categorias/${cat.slug}`} target="_blank">{T("Ver página pública ↗")}</Link> : null}
       </div>
 
       <form action={updateCategoryAction} className="card" key={JSON.stringify(cat)}>
-        <h2>Datos generales</h2>
+        <h2>{T("Datos generales")}</h2>
         <input type="hidden" name="id" value={cat.id} />
         <div className="row-3">
-          <div className="field"><label htmlFor="name_es">Nombre (ES)</label><input id="name_es" name="name_es" type="text" required defaultValue={cat.name_es} /></div>
-          <div className="field"><label htmlFor="name_en">Nombre (EN)</label><input id="name_en" name="name_en" type="text" required defaultValue={cat.name_en} /></div>
-          <div className="field"><label htmlFor="icon">Icono</label><input id="icon" name="icon" type="text" maxLength={8} defaultValue={cat.icon} /></div>
+          <div className="field"><label htmlFor="name_es">{T("Nombre (ES)")}</label><input id="name_es" name="name_es" type="text" required defaultValue={cat.name_es} /></div>
+          <div className="field"><label htmlFor="name_en">{T("Nombre (EN)")}</label><input id="name_en" name="name_en" type="text" required defaultValue={cat.name_en} /></div>
+          <div className="field"><label htmlFor="icon">{T("Icono")}</label><input id="icon" name="icon" type="text" maxLength={8} defaultValue={cat.icon} /></div>
         </div>
         <div className="row-2">
-          <div className="field"><label htmlFor="description_es">Descripción (ES)</label><textarea id="description_es" name="description_es" defaultValue={cat.description_es} /></div>
-          <div className="field"><label htmlFor="description_en">Descripción (EN)</label><textarea id="description_en" name="description_en" defaultValue={cat.description_en} /></div>
+          <div className="field"><label htmlFor="description_es">{T("Descripción (ES)")}</label><textarea id="description_es" name="description_es" defaultValue={cat.description_es} /></div>
+          <div className="field"><label htmlFor="description_en">{T("Descripción (EN)")}</label><textarea id="description_en" name="description_en" defaultValue={cat.description_en} /></div>
         </div>
         <div className="row-2">
-          <div className="field"><label htmlFor="sort">Orden</label><input id="sort" name="sort" type="number" defaultValue={cat.sort} /></div>
-          <label className="check" style={{ alignSelf: "center" }}><input type="checkbox" name="active" defaultChecked={!!cat.active} /> Visible en el sitio y el formulario</label>
+          <div className="field"><label htmlFor="sort">{T("Orden")}</label><input id="sort" name="sort" type="number" defaultValue={cat.sort} /></div>
+          <label className="check" style={{ alignSelf: "center" }}><input type="checkbox" name="active" defaultChecked={!!cat.active} /> {T("Visible en el sitio y el formulario")}</label>
         </div>
-        <p className="small muted">Slug: /categorias/{cat.slug} (no se cambia para no romper enlaces).</p>
-        <button className="btn btn-primary btn-sm">Guardar</button>
+        <p className="small muted">{T("Slug: /categorias/{slug} (no se cambia para no romper enlaces).", { slug: cat.slug })}</p>
+        <button className="btn btn-primary btn-sm">{T("Guardar")}</button>
       </form>
 
       <div className="card">
-        <h2>Tipos de negocio (subcategorías)</h2>
+        <h2>{T("Tipos de negocio (subcategorías)")}</h2>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
-          {subs.length === 0 && <span className="muted">Ninguno.</span>}
+          {subs.length === 0 && <span className="muted">{T("Ninguno.")}</span>}
           {subs.map((s) => (
             <form key={s.id} action={toggleSubcategoryAction} className="inline-form">
               <input type="hidden" name="id" value={s.id} />
               <input type="hidden" name="category_id" value={cat.id} />
-              <button className={`badge ${s.active ? "badge-brand" : ""}`} style={{ cursor: "pointer", textDecoration: s.active ? "none" : "line-through" }} title={s.active ? "Clic para ocultar" : "Clic para activar"}>
-                {s.name_es}
+              <button className={`badge ${s.active ? "badge-brand" : ""}`} style={{ cursor: "pointer", textDecoration: s.active ? "none" : "line-through" }} title={s.active ? T("Clic para ocultar") : T("Clic para activar")}>
+                {T.lang === "en" ? s.name_en : s.name_es}
               </button>
             </form>
           ))}
         </div>
         <form action={addSubcategoryAction} className="row-3" style={{ alignItems: "end" }}>
           <input type="hidden" name="category_id" value={cat.id} />
-          <div className="field"><label htmlFor="sub_es">Nuevo tipo (ES)</label><input id="sub_es" name="name_es" type="text" required /></div>
+          <div className="field"><label htmlFor="sub_es">{T("Nuevo tipo (ES)")}</label><input id="sub_es" name="name_es" type="text" required /></div>
           <div className="field"><label htmlFor="sub_en">(EN)</label><input id="sub_en" name="name_en" type="text" /></div>
-          <button className="btn btn-ghost btn-sm">Agregar</button>
+          <button className="btn btn-ghost btn-sm">{T("Agregar")}</button>
         </form>
       </div>
 
       <div className="card">
-        <h2>Checklist específico</h2>
-        <p className="small muted">Se suma a los 12 puntos generales. Peso 1–5 (importancia en el puntaje).</p>
+        <h2>{T("Checklist específico")}</h2>
+        <p className="small muted">{T("Se suma a los 12 puntos generales. Peso 1–5 (importancia en el puntaje).")}</p>
         <div className="table-wrap" style={{ marginBottom: 14 }}>
           <table>
-            <thead><tr><th>Texto (ES)</th><th>Texto (EN)</th><th>Peso</th><th>Activo</th><th></th></tr></thead>
+            <thead><tr><th>{T("Texto (ES)")}</th><th>{T("Texto (EN)")}</th><th>{T("Peso")}</th><th>{T("Activo")}</th><th></th></tr></thead>
             <tbody>
               {items.map((it) => (
                 <tr key={`${it.id}|${it.label_es}|${it.label_en}|${it.weight}|${it.active}`}>
@@ -87,11 +91,11 @@ export default async function CategoryEdit({ params }: { params: Promise<{ id: s
                     <form action={updateChecklistItemAction} style={{ display: "grid", gridTemplateColumns: "2fr 2fr 70px 60px auto", gap: 8, padding: 8, alignItems: "center" }}>
                       <input type="hidden" name="id" value={it.id} />
                       <input type="hidden" name="category_id" value={cat.id} />
-                      <input name="label_es" type="text" defaultValue={it.label_es} aria-label="Texto ES" />
-                      <input name="label_en" type="text" defaultValue={it.label_en} aria-label="Texto EN" />
-                      <input name="weight" type="number" min={1} max={5} defaultValue={it.weight} aria-label="Peso" />
-                      <input name="active" type="checkbox" defaultChecked={!!it.active} aria-label="Activo" style={{ width: 20, height: 20 }} />
-                      <button className="btn btn-ghost btn-sm">Guardar</button>
+                      <input name="label_es" type="text" defaultValue={it.label_es} aria-label={T("Texto ES")} />
+                      <input name="label_en" type="text" defaultValue={it.label_en} aria-label={T("Texto EN")} />
+                      <input name="weight" type="number" min={1} max={5} defaultValue={it.weight} aria-label={T("Peso")} />
+                      <input name="active" type="checkbox" defaultChecked={!!it.active} aria-label={T("Activo")} style={{ width: 20, height: 20 }} />
+                      <button className="btn btn-ghost btn-sm">{T("Guardar")}</button>
                     </form>
                   </td>
                 </tr>
@@ -101,16 +105,16 @@ export default async function CategoryEdit({ params }: { params: Promise<{ id: s
         </div>
         <form action={addChecklistItemAction} className="row-3" style={{ alignItems: "end" }}>
           <input type="hidden" name="category_id" value={cat.id} />
-          <div className="field"><label htmlFor="ci_es">Nuevo punto (ES)</label><input id="ci_es" name="label_es" type="text" required /></div>
+          <div className="field"><label htmlFor="ci_es">{T("Nuevo punto (ES)")}</label><input id="ci_es" name="label_es" type="text" required /></div>
           <div className="field"><label htmlFor="ci_en">(EN)</label><input id="ci_en" name="label_en" type="text" /></div>
-          <div className="field"><label htmlFor="ci_w">Peso</label><input id="ci_w" name="weight" type="number" min={1} max={5} defaultValue={2} /></div>
-          <button className="btn btn-ghost btn-sm">Agregar punto</button>
+          <div className="field"><label htmlFor="ci_w">{T("Peso")}</label><input id="ci_w" name="weight" type="number" min={1} max={5} defaultValue={2} /></div>
+          <button className="btn btn-ghost btn-sm">{T("Agregar punto")}</button>
         </form>
       </div>
 
       <div className="card">
-        <h2>Preguntas de ejemplo</h2>
-        <p className="small muted">Usa {"{ciudad}"} donde va el cantón. Se sugieren al registrar consultas y se muestran en la página pública.</p>
+        <h2>{T("Preguntas de ejemplo")}</h2>
+        <p className="small muted">{T("Usa {ciudad} donde va el cantón. Se sugieren al registrar consultas y se muestran en la página pública.")}</p>
         <ul>
           {questions.map((q) => (
             <li key={q.id} style={{ marginBottom: 6 }}>
@@ -118,16 +122,16 @@ export default async function CategoryEdit({ params }: { params: Promise<{ id: s
               <form action={deleteQuestionAction} className="inline-form">
                 <input type="hidden" name="id" value={q.id} />
                 <input type="hidden" name="category_id" value={cat.id} />
-                <button className="btn btn-danger btn-sm" style={{ minHeight: 26, padding: "0 8px" }}>Quitar</button>
+                <button className="btn btn-danger btn-sm" style={{ minHeight: 26, padding: "0 8px" }}>{T("Quitar")}</button>
               </form>
             </li>
           ))}
         </ul>
         <form action={addQuestionAction} className="row-3" style={{ alignItems: "end" }}>
           <input type="hidden" name="category_id" value={cat.id} />
-          <div className="field"><label htmlFor="q_es">Pregunta (ES)</label><input id="q_es" name="text_es" type="text" required placeholder="¿Dónde…en {ciudad}?" /></div>
+          <div className="field"><label htmlFor="q_es">{T("Pregunta (ES)")}</label><input id="q_es" name="text_es" type="text" required placeholder="¿Dónde…en {ciudad}?" /></div>
           <div className="field"><label htmlFor="q_en">(EN)</label><input id="q_en" name="text_en" type="text" /></div>
-          <button className="btn btn-ghost btn-sm">Agregar pregunta</button>
+          <button className="btn btn-ghost btn-sm">{T("Agregar pregunta")}</button>
         </form>
       </div>
     </div>

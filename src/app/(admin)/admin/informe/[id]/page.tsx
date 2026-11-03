@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { platformName, REC_AREAS, SITE } from "@/config/site";
+import { adminT, adminTitle } from "@/lib/admin-i18n";
 import { requirePerm } from "@/lib/auth";
 import { checklistScore, pct, visibilityStats } from "@/lib/report";
 import { getAudit, getBusiness, listChecklist, listChecks, listQueries, listRecommendations } from "@/lib/repo";
 import { PrintButton } from "./PrintButton";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Informe" };
+export async function generateMetadata() {
+  return adminTitle("Informe");
+}
 
 const L = {
   es: {
@@ -48,6 +51,7 @@ const L = {
 
 export default async function ReportPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ lang?: string }> }) {
   await requirePerm("reports.view");
+  const T = await adminT();
   const { id } = await params;
   const sp = await searchParams;
   const audit = await getAudit(Number(id));
@@ -75,10 +79,10 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
   return (
     <>
       <div className="report-toolbar">
-        <Link className="btn btn-ghost btn-sm" href={`/admin/auditorias/${audit.id}`}>← Volver</Link>
-        <PrintButton />
+        <Link className="btn btn-ghost btn-sm" href={`/admin/auditorias/${audit.id}`}>{T("← Volver")}</Link>
+        <PrintButton label={T("Imprimir / Guardar PDF")} />
         <Link className="btn btn-ghost btn-sm" href={`?lang=${lang === "es" ? "en" : "es"}`}>{lang === "es" ? "English" : "Español"}</Link>
-        {biz.is_demo ? <span className="badge badge-warn">DEMO — datos ficticios</span> : null}
+        {biz.is_demo ? <span className="badge badge-warn">{T("DEMO — datos ficticios")}</span> : null}
       </div>
       <article className="report" lang={lang}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>

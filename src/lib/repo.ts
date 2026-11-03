@@ -30,7 +30,7 @@ export type Business = {
   status: BusinessStatus; notes: string; created_at: string; updated_at: string;
 };
 export type BusinessRow = Business & {
-  category_name: string | null; category_name_en: string | null; category_slug: string | null; subcategory_name: string | null;
+  category_name: string | null; category_name_en: string | null; category_slug: string | null; subcategory_name: string | null; subcategory_name_en: string | null;
   province_name: string | null; canton_name: string | null; parish_name: string | null;
 };
 
@@ -129,7 +129,7 @@ export async function listParishes(cantonCode: string) {
 // ---------- Negocios ----------
 
 const BUSINESS_SELECT = `
-  SELECT b.*, cat.name_es AS category_name, cat.name_en AS category_name_en, cat.slug AS category_slug, s.name_es AS subcategory_name,
+  SELECT b.*, cat.name_es AS category_name, cat.name_en AS category_name_en, cat.slug AS category_slug, s.name_es AS subcategory_name, s.name_en AS subcategory_name_en,
          p.name AS province_name, cn.name AS canton_name, pa.name AS parish_name
   FROM businesses b
   LEFT JOIN categories cat ON cat.id = b.category_id
