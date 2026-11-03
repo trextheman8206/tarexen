@@ -6,6 +6,7 @@ import { z } from "zod";
 import { CONSENT_VERSION } from "@/config/site";
 import { db } from "@/lib/db";
 import { isLang } from "@/lib/i18n";
+import { sendLeadAlert } from "@/lib/notify";
 import { createBusiness, getCategoryBySlug } from "@/lib/repo";
 
 export type SnapshotState = { attempt: number; errors: Record<string, string>; values: Record<string, string> };
@@ -124,7 +125,10 @@ export async function submitSnapshot(prev: SnapshotState, formData: FormData): P
 
   // Verificar que la ubicación y la subcategoría sean coherentes.
   const c = await db();
-  const canton = await c.execute({ sql: "SELECT 1 FROM cantons WHERE code = ? AND province_code = ?", args: [v.canton, v.province] });
+  const canton = await c.execute({
+    sql: "SELECT c.name AS canton, p.name AS province FROM cantons c JOIN provinces p ON p.code = c.province_code WHERE c.code = ? AND c.province_code = ?",
+    args: [v.canton, v.province],
+  });
   if (!canton.rows.length) return fail({ canton: msg("location") });
   let parishId: number | null = null;
   if (v.parish && v.parish !== "other") {
@@ -138,8 +142,10 @@ export async function submitSnapshot(prev: SnapshotState, formData: FormData): P
     if (s.rows.length) subId = Number(s.rows[0].id);
   }
 
+  const source = /^(free|business|pro):(ec|intl)$/.test(raw.plan ?? "") ? `web:${raw.plan}` : "web";
+  let businessId: number;
   try {
-    await createBusiness({
+    businessId = await createBusiness({
       name: v.name,
       category_id: category.id,
       subcategory_id: subId,
@@ -168,12 +174,24 @@ export async function submitSnapshot(prev: SnapshotState, formData: FormData): P
       preferred_lang: v.report_lang,
       consent_at: new Date().toISOString(),
       consent_version: CONSENT_VERSION,
-      source: /^(free|business|pro):(ec|intl)$/.test(raw.plan ?? "") ? `web:${raw.plan}` : "web",
+      source,
     });
   } catch (err) {
     console.error("[snapshot] no se pudo guardar", err);
     return fail({ _form: msg("server") });
   }
+
+  await sendLeadAlert({
+    id: businessId,
+    name: v.name,
+    category: category.name_es,
+    location: `${canton.rows[0].canton}, ${canton.rows[0].province}`,
+    contactName: v.contact_name,
+    whatsapp: v.whatsapp || null,
+    email: v.email || null,
+    products: v.products,
+    source,
+  });
 
   redirect(`/${lang}/gracias`);
 }

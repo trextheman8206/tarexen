@@ -20,7 +20,7 @@ Plataforma para medir y mejorar cómo aparecen los negocios de Ecuador en ChatGP
 | Categorías editables sin código (tipos, checklist, preguntas) | `/admin/categorias` |
 | Estado real de integraciones | `/admin/integraciones` |
 
-**No incluido todavía:** panel del cliente con login, conectores de API de IA, envío de emails, cobros en línea, suscripciones. Ver fases en `docs/02-arquitectura.md`.
+**No incluido todavía:** panel del cliente con login, conectores de API de IA, emails de confirmación a clientes, cobros en línea, suscripciones. Ver fases en `docs/02-arquitectura.md`.
 
 ## Ejecutar en local
 

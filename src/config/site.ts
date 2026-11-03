@@ -18,7 +18,7 @@ export function whatsappLink(text: string): string | null {
 }
 
 // Versión del texto de consentimiento guardada con cada registro (LOPDP).
-export const CONSENT_VERSION = "2026-10-30";
+export const CONSENT_VERSION = "2026-11-03";
 
 export const PLATFORMS = [
   { id: "chatgpt", name: "ChatGPT" },

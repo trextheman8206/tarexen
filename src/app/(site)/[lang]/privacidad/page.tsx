@@ -30,6 +30,8 @@ export default async function PrivacyPage({ params }: { params: Promise<{ lang: 
           <p>Leads that don&apos;t become clients are deleted after 12 months. Client data is kept as long as tax law requires.</p>
           <h2>Your rights</h2>
           <p>You can request access, correction, deletion, objection or portability of your data, or withdraw consent, by writing to {contact}. We answer within the legal timeframes.</p>
+          <h2>Service providers</h2>
+          <p>We use outside providers only to run the service: web hosting (Netlify), database (Turso) and email alerts to our team (Resend). Some process data outside Ecuador.</p>
           <h2>Security</h2>
           <p>Data is stored in a database with restricted access. We never ask for your Google password: changes to your profile only happen if you add us as a manager.</p>
         </div>
@@ -57,6 +59,8 @@ export default async function PrivacyPage({ params }: { params: Promise<{ lang: 
         <p>Los datos de quienes no se convierten en clientes se eliminan a los 12 meses. Los de clientes se conservan lo que exija la normativa tributaria.</p>
         <h2>Tus derechos</h2>
         <p>Puedes pedir acceso, rectificación, eliminación, oposición o portabilidad de tus datos, o retirar tu consentimiento, escribiendo a {contact}. Respondemos en los plazos que fija la ley.</p>
+        <h2>Proveedores</h2>
+        <p>Usamos proveedores externos solo para operar el servicio: alojamiento web (Netlify), base de datos (Turso) y envío de avisos por email al equipo (Resend). Algunos procesan datos fuera de Ecuador.</p>
         <h2>Seguridad</h2>
         <p>Los datos se guardan en una base de datos con acceso restringido. Nunca pedimos tu contraseña de Google: los cambios en tu ficha solo se hacen si nos agregas como administrador.</p>
       </div>

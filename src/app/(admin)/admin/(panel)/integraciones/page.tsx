@@ -1,6 +1,7 @@
 import { SITE } from "@/config/site";
 import { requirePerm } from "@/lib/auth";
 import { databaseDiagnostics, isLocalDatabase } from "@/lib/db";
+import { alertRecipient, emailAlertsConfigured } from "@/lib/notify";
 
 export const metadata = { title: "Integraciones" };
 
@@ -72,8 +73,12 @@ export default async function IntegrationsPage() {
           <dd>{SITE.whatsapp ? <Status ok label={`+${SITE.whatsapp}`} /> : <><Status ok={false} label="No configurado" /> <span className="small muted">NEXT_PUBLIC_WHATSAPP_NUMBER — el botón está oculto</span></>}</dd>
           <dt>Email público</dt>
           <dd>{SITE.email ? <Status ok label={SITE.email} /> : <><Status ok={false} label="No configurado" /> <span className="small muted">NEXT_PUBLIC_CONTACT_EMAIL</span></>}</dd>
-          <dt>Envío de emails</dt>
-          <dd><span className="badge">No implementado</span> <span className="small muted">Las notificaciones de nuevos leads se revisan en este panel.</span></dd>
+          <dt>Avisos por email</dt>
+          <dd>
+            {emailAlertsConfigured()
+              ? <><Status ok label="Clave presente" /> <span className="small muted">Avisos de solicitudes nuevas a {alertRecipient()} (Resend). Si no llegan, revisa spam y que la cuenta de Resend use ese mismo email.</span></>
+              : <><Status ok={false} label="No configurado" /> <span className="small muted">RESEND_API_KEY — las solicitudes se guardan, pero solo se ven en este panel.</span></>}
+          </dd>
           <dt>Pagos en línea</dt>
           <dd><span className="badge">No implementado</span> <span className="small muted">Cobro por transferencia; registra cada pago en la ficha del negocio.</span></dd>
           <dt>URL del sitio</dt>
